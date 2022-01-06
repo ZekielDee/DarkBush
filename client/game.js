@@ -2,24 +2,25 @@ const readline = require('readline');
 const _ = require('lodash');
 const snarkjs = require("snarkjs");
 const fs = require("fs");
+const ff = require("ffjavascript");
 const Web3 = require('web3');
-const { isPrimitive } = require('util');
 const web3 = new Web3('http://localhost:8545');
-const game_addr = '0x7dF7F927494d4Fd0d10d7058c88805BBb3fAde17'; //replace w/ game_addr
-const verifier_addr = '0x3E4d4D9D11509fe40c35aB545B7eD9914508b179'; //replace w/ verifier_addr
+const game_addr = '0xbD7d6BcD5899f56F016C72EEC273B922cb90B16D'; //replace w/ game_addr
+//const verifier_addr = '0x13cba4ac4aa6da5658938c79add0301c6deb15df'; //replace w/ verifier_addr
 const wasm = './circuit_js/circuit.wasm';
 const zkey = './circuit_0001.zkey';
 const WITNESS_FILE = './witness.wtns';
 const witness_calculator = require('/home/zekiel/assignment1/circuit_js/witness_calculator.js'); //replace w/ absolute path
 const State_contract = require('/home/zekiel/assignment1/build/contracts/DarkBush.json'); // replace w/ absolute path
 const { spawn } = require("child_process");
+const {unstringifyBigInts} = ff.utils;
 
-const Contract = new web3.eth.Contract(State_contract.abi, game_addr);
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
+
 
 
 // helper functions
@@ -86,8 +87,7 @@ const generateWitness = async (inputSignals) => {
 }
 
 const submitProof = async (stdout) => {
-  const Account = web3.eth.accounts.create(web3.utils.randomHex(32));
-  console.log(`address created on chain: ${Account.address}`);
+  console.log(`address used on chain: ${address}`);
   const calldata = _.split(stdout, '"');
   let hexes = [];
   for (let i=0; i< calldata.length; i++){
@@ -95,9 +95,6 @@ const submitProof = async (stdout) => {
       hexes.push(calldata[i]);
     }
   }
-  //console.log(hexes);
-  
-  //spawn arguments
   /*
             uint[2] memory _a,
             uint[2][2] memory _b,
@@ -108,10 +105,23 @@ const submitProof = async (stdout) => {
   const _b = [[hexes[2],hexes[3]],[hexes[4],hexes[5]]];
   const _c = [hexes[6],hexes[7]];
   const _input = [hexes[8]];
-  Contract.methods.spawn(_a, _b, _c, _input).call({from: Account.address}, function(error, result) {
-    console.log(error);
-    console.log(JSON.stringify(result));
-  });
+  console.log(_a);
+  console.log(_b);
+  console.log(_c);
+  console.log(_input);
+  Contract.methods.spawn(_a, _b, _c, _input).send({from: address}).on('transactionHash', function(hash){
+    })
+      .on('confirmation', function(confirmationNumber, receipt){  
+    })
+      .on('receipt', function(receipt){
+      console.log(JSON.stringify(result));
+      rl.question('Get PlanetIDs? (Y/N) ', getIds);
+    }).on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+      console.log(error);
+      console.log(receipt);
+      console.log("error initializing player...");
+    });
+
 }
 
 // main functions
@@ -130,43 +140,65 @@ const submitProof = async (stdout) => {
     After you have spawned. Can you log back in to the program?
     First ask if you are an existing player then you can input your address and log in. then you can either make simple interaction or exit.
     */ 
+
+const Contract = new web3.eth.Contract(State_contract.abi, game_addr);
+
 const spawnPlayer = async (answer) => {
   if (answer == 'Y'){
+    const accounts = await web3.eth.getAccounts();
+    console.log(accounts);
     const [x,y] = getCoordinates();
+    console.log(`Coords: (${x},${y})`);
     const witness = await generateWitness({ x , y , r1: 64 , r2: 32 });
-    const cmd1 = spawn("snarkjs", ["groth16" ,"prove","circuit_0001.zkey" ,"./witness.wtns", "proof.json" ,"public.json"]);
-
-    cmd1.stdout.on("data", data => {
-        console.log(`stdout: ${data}`);
-    });
-
-    cmd1.stderr.on("data", data => {
-        console.log(`stderr: ${data}`);
-    });
-
-    cmd1.on('error', (error) => {
-        console.log(`error: ${error.message}`);
-    });
-
-    cmd1.on("close", code => {
-        console.log(`child process exited with code ${code}`);
-        const cmd2 = spawn("snarkjs",["zkey", "export", "soliditycalldata", "public.json", "proof.json"]);
-        cmd2.stdout.on("data", submitProof);
-        cmd2.stderr.on("data", data => {
-          console.log(`stderr: ${data}`);
-        });
+    const { proof, publicSignals } = await snarkjs.groth16.prove(
+      zkey,
+      WITNESS_FILE
+    );
   
-        cmd2.on('error', (error) => {
-          console.log(`error: ${error.message}`);
-        });
+      const editedPublicSignals = unstringifyBigInts(publicSignals);
+      const editedProof = unstringifyBigInts(proof);
   
-    });
-    
-    
+    const calldata = await snarkjs.groth16.exportSolidityCallData(
+      editedProof,
+      editedPublicSignals
+    );
+  
+    const calldataSplit = calldata.split(",");
+    let a = eval(calldataSplit.slice(0, 2).join());
+    let b = eval(calldataSplit.slice(2, 6).join());
+    let c = eval(calldataSplit.slice(6, 8).join());
+    let input = eval(calldataSplit.slice(8, 12).join());
+  
+    await Contract.methods
+      .spawn(a,b,c,input)
+      .send({ from: accounts[0], gas: 3000000 })
+      .then(console.log);
+    console.log("Calling the smart contract function to get the planet Ids");
+    await Contract.methods.getPlanetIds().call({from: accounts[0]}).then(console.log);
+  } else {
+    console.log('GoodBye!');
+    process.exit(0);
   }
 }
 
-rl.question('Spawn Player? (Y/N) ', spawnPlayer); 
+const getIds = async (answer) => {
+  Contract.methods.getPlanetIds().send({from: address}, function(error, result) {
+    if (error) {
+      console.log("error getting ids ...");
+      process.exit(0);
+    }
+    console.log(result);
+  });
+}
+
+// rl.question('input address: ', (addr) => {
+//   address = addr;
+//   console.log(address);
+// })
+
+rl.question('Spawn Player? (Y/N) ', spawnPlayer);
+
+//rl.question('Get PlanetIDs? (Y/N) ', getIds);
 
 
 
