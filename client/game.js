@@ -5,7 +5,7 @@ const fs = require("fs");
 const ff = require("ffjavascript");
 const Web3 = require('web3');
 const web3 = new Web3('http://localhost:8545');
-const game_addr = '0xbD7d6BcD5899f56F016C72EEC273B922cb90B16D'; //replace w/ game_addr
+const game_addr = '0xaaD515E4E38ED05e21CA3e2b0acbE72dC2e16e0d'; //replace w/ game_addr
 //const verifier_addr = '0x13cba4ac4aa6da5658938c79add0301c6deb15df'; //replace w/ verifier_addr
 const wasm = './circuit_js/circuit.wasm';
 const zkey = './circuit_0001.zkey';
@@ -146,7 +146,7 @@ const Contract = new web3.eth.Contract(State_contract.abi, game_addr);
 const spawnPlayer = async (answer) => {
   if (answer == 'Y'){
     const accounts = await web3.eth.getAccounts();
-    console.log(accounts);
+    console.log(accounts[0]);
     const [x,y] = getCoordinates();
     console.log(`Coords: (${x},${y})`);
     const witness = await generateWitness({ x , y , r1: 64 , r2: 32 });
@@ -175,6 +175,7 @@ const spawnPlayer = async (answer) => {
       .then(console.log);
     console.log("Calling the smart contract function to get the planet Ids");
     await Contract.methods.getPlanetIds().call({from: accounts[0]}).then(console.log);
+    process.exit(0);
   } else {
     console.log('GoodBye!');
     process.exit(0);
