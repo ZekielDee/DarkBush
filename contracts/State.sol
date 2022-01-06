@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENCED
 pragma solidity >=0.4.22 <0.9.0;
 
-import "./MerkleTree.sol"
+import "./MerkleTree.sol";
 
 interface ProofVerifier {
     function verifyProof(
@@ -21,7 +21,7 @@ contract DarkBush {
     }
 
     ProofVerifier verifier;
-    MerkleTree tree;
+    //MerkleTree tree;
 
     //hashed position to planet
     mapping(uint256 => Planet) public planets;
@@ -45,5 +45,9 @@ contract DarkBush {
 
         planet.last_spawn = block.timestamp;
         planet.occupied = true;
+    }
+
+    function getPlanetId() external view returns (uint) {
+        
     }
  }

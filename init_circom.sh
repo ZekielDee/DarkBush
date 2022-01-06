@@ -2,8 +2,8 @@
 
 # sleep 5
 
-# cd circuits_js
-# node generate_witness.js circuit.wasm ../input.json ../witness.wtns
+
+# node ./circuit_js/generate_witness.js ./circuit_js/circuit.wasm ./circuit_js/input.json witness.wtns
 # cd ../
 
 # snarkjs powersoftau new bn128 12 pot12_0000.ptau -v
@@ -13,8 +13,9 @@
 # snarkjs zkey contribute circuit_0000.zkey circuit_0001.zkey --name="1st Contributor Name" -v
 # snarkjs zkey export verificationkey circuit_0001.zkey verification_key.json
 
-# snarkjs groth16 prove circuit_0001.zkey witness.wtns proof.json public.json
-# snarkjs groth16 verify verification_key.json public.json proof.json
+snarkjs groth16 prove circuit_0001.zkey ./witness.wtns ./tmp/proof.json ./tmp/public.json
+# snarkjs groth16 verify verification_key.json ./tmp/public.json ./tmp/proof.json
 
-snarkjs zkey export solidityverifier circuit_0001.zkey verifier.sol
-# snarkjs zkey export soliditycalldata public.json proof.json
+# snarkjs zkey export solidityverifier circuit_0001.zkey verifier.sol
+
+snarkjs zkey export soliditycalldata ./tmp/public.json ./tmp/proof.json > ./tmp/calldata

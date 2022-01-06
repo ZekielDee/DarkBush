@@ -22,7 +22,7 @@ function GCD (x,y) {
 // returns 1 if prime.
 function isPrime(n) {
     if (n == 1) {
-        return 1;
+        return 0;
     }
     for (var i=2; i<n; i++){
         if (n % i == 0){
