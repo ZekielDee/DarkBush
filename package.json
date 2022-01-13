@@ -17,6 +17,7 @@
     "ffjavascript": "^0.2.46",
     "ganache-cli": "^6.12.2",
     "ganache-core": "^2.13.2",
+    "inquirer": "^8.2.0",
     "lodash": "^4.17.21",
     "snarkjs": "^0.4.10",
     "web3": "^1.6.1"

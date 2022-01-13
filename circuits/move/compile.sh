@@ -1,0 +1,20 @@
+circom circuit.circom --r1cs --wasm --sym --c
+
+node ./circuit_js/generate_witness.js ./circuit_js/circuit.wasm ./input.json witness.wtns
+cp ./circuit_js/circuit.wasm ./circuit.wasm
+cp ./circuit_js/generate_witness.js ./generate_witness.js
+cp ./circuit_js/witness_calculator.js ./witness_calculator.js
+
+snarkjs powersoftau new bn128 12 pot12_0000.ptau -v
+snarkjs powersoftau contribute pot12_0000.ptau pot12_0001.ptau --name="First contribution" -v
+snarkjs powersoftau prepare phase2 pot12_0001.ptau pot12_final.ptau -v
+snarkjs groth16 setup circuit.r1cs pot12_final.ptau circuit_0000.zkey
+snarkjs zkey contribute circuit_0000.zkey circuit_0001.zkey --name="1st Contributor Name" -v
+snarkjs zkey export verificationkey circuit_0001.zkey verification_key.json
+
+snarkjs groth16 prove circuit_0001.zkey ./witness.wtns proof.json public.json
+snarkjs groth16 verify verification_key.json ./public.json ./proof.json
+
+snarkjs zkey export solidityverifier circuit_0001.zkey verifier.sol
+
+#snarkjs zkey export soliditycalldata ./tmp/public.json ./tmp/proof.json > ./tmp/calldata
