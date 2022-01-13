@@ -175,10 +175,13 @@ contract DarkBush {
         // if planet not initialized
         if (! toPlanet.init) {
             toPlanet.max_collection = R(pf);
+            toPlanet.init = true;
         }
+
         toPlanet.residents_data[msg.sender] = ResidentData(block.timestamp);
         address prevOwner = toPlanet.owner;
         toPlanet.owner = msg.sender;
+        toPlanet.occupied = true;
         
         // add player to players on the planet.
         for (uint i =0; i < toPlanet.players.length; i++) {
@@ -187,7 +190,7 @@ contract DarkBush {
             }
         }
         // get previous owner's pending resources
-        players[msg.sender].resources += players[prevOwner].pending_resources;
+        players[msg.sender].pending_resources += players[prevOwner].pending_resources;
         players[prevOwner].pending_resources = 0;
         return true;
     }

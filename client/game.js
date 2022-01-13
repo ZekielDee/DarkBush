@@ -5,7 +5,7 @@ const fs = require("fs");
 const ff = require("ffjavascript");
 const Web3 = require('web3');
 const web3 = new Web3('http://localhost:8545');
-const gameAddr = '0xE3Ee3252A568511676ABf88A79E79D3f2A904288'; //replace w/ game_addr
+const gameAddr = '0x0287300C29a53E2911b73be7838063fcf01CF00a'; //replace w/ game_addr
 const inquirer = require('inquirer')
 // const wasm = './circuit_js/circuit.wasm';
 // const zkey = './circuit_0001.zkey';
@@ -14,7 +14,7 @@ const inquirer = require('inquirer')
 const StateContract = require('/home/zekiel/DarkBush/build/contracts/DarkBush.json'); // replace w/ absolute path
 const {unstringifyBigInts} = ff.utils;
 
-//zkey, wasm, WITNESS_FILE, witness_calculator
+
 // Move Proof Files
 const moveZkey = './circuits/move/circuit_0001.zkey';
 const moveWasm = './circuits/move/circuit.wasm';
@@ -107,13 +107,17 @@ const movePlayer = async (address, x1, y1, x2, y2) => {
   let input = eval(calldataSplit.slice(8, 12).join());
   //access blockchain.
   console.log("input: ", input);
+  try {
+    await DarkBush.methods.move(
+      a,
+      b,
+      c,
+      input
+    ).send({from: address, gas: 600000});
+  } catch(err){
+    console.log('Try again, must wait 30s before moving twice');
+  }
   
-  await DarkBush.methods.move(
-    a,
-    b,
-    c,
-    input
-  ).send({from: address, gas: 600000}).then(console.log);
 }
 
 const getIds = async (answer) => {
@@ -191,7 +195,6 @@ const main = async () => {
       const result2 = await inquirer.prompt({
         type: 'input', message: 'enter new y coordinate', name: 'y'
       });
-      console.log(x, y);
       await movePlayer(address, x, y, result1.x, result2.y);
       x = result1.x;
       y = result2.y;

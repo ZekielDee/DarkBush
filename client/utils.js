@@ -1,9 +1,9 @@
 const Web3 = require('web3');
 const web3 = new Web3('http://localhost:8545');
 
-const game_addr = '0xE3Ee3252A568511676ABf88A79E79D3f2A904288'; //replace w/ game_addr
+const gameAddr = '0x0287300C29a53E2911b73be7838063fcf01CF00a'; //replace w/ game_addr
 const State_contract = require('/home/zekiel/DarkBush/build/contracts/DarkBush.json');
-const DarkBush = new web3.eth.Contract(State_contract.abi, game_addr);
+const DarkBush = new web3.eth.Contract(State_contract.abi, gameAddr);
 // helper functions
 
 
