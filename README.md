@@ -2,14 +2,14 @@
 
 npm install
 
-#how to test smart contracts on remix
+how to test smart contracts on remix
 
-#Get the spawn proof:
+Get the spawn proof:
 cd ./circuits/init
 bash compile.sh
 bash generate_calldata.sh
 
-#Get the move proof
+Get the move proof
 cd ./circuits/move
 bash compile.sh
 bash generate_calldata.sh
